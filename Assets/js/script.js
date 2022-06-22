@@ -99,3 +99,68 @@ function nextQuestion(event) {
 
 //Checks if you are on the first question if not checks answer from pre question
 //if answer isnt incorrect time left is reduced and will flash yellow
+function writeAnswer(event) {
+    if (event !== undefined) {
+        if (event.currentTarget.textcontent === questionList[currentQues -1].answer) {
+            isCorrect = true;
+            answer.textContent = "Correct, Wow you're smart";
+            answer.setAttribute("style", "color:green");
+            score += 10;
+        } else {
+            isCorrect = false;
+            answer.textcontent = "Incorrect, wow......";
+            answer.setAttribute("style","color: red");
+            if(timeLeft > 10) {
+                timeLeft -= 10;
+            } else {
+                timeLeft = 1;
+            }
+            timer.setAttribute("style", "color: yellow")
+            setTimeout(function () {
+                timer.setAttribute("style","color: red");
+            },1000);
+        }
+        clearAnswer();
+    }
+}
+
+function clearAnswer() {
+    if(isClearingAnswer) {
+        isClearingAnswer = false;
+        clearTimeout(clearingAnswerCode);
+        clearAnswer();
+    } else {
+        isClearingAnswer = true;
+        clearingAnswerCode = setTimeout(function() {
+            answer.textContent = "";
+            isClearingAnswer = false;
+        }, 3000);
+    }
+}
+
+function changeQuestion() {
+    title.textContent = questionList[currentQues].question;
+    for(let i = 0; i < questionList[currentQues].options.length; i++) {
+        optionList[i].textContent = questionList[currentQues].options[i];
+        optionList[i].addEventListener("click", nextQuestion);
+    }
+    currentQues++;
+}
+
+//Changes title to All Done, clears options and displays the score
+
+function endOfQuiz(){
+    title.textContent = "All Done.";
+    timeLeft = 1;
+    clearOptions();
+    clearAnswer();
+    content.setAttribute("style", "display: visible");
+    content.textContent = `Your final score is ${score}`;
+    inputFields();
+}
+function clearOptions() {
+    for (let i = 0; i < optionList.length; i++) {
+        optionList[i].remove();
+    }
+    optionList = [];
+}
