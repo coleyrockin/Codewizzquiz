@@ -14,7 +14,7 @@ class Question {
         this.options = options;
         this.answer = answer;
     }
-}
+};
 
 let questionList = [];
 
@@ -55,14 +55,14 @@ let isCorrect = false;
 function init() {
     start.addEventListener("click", questionLoop);
     scores.addEventListener("click", showScores);
-}
+};
 
 //makes elements before the quiz started invisible and creates option buttons
 function questionLoop (){
     runTimer();
     isQuizOngoing =true;
     start.setAttribute("style", "display: none");
-    content.setAttribute("style", "display:none");
+    content.setAttribute("style", "display: none");
     let numOfOptions = questionList[0].options.length;
     for(let i = 0; i < numOfOptions; i++) {
         let option = document.createElement("button");
@@ -71,7 +71,7 @@ function questionLoop (){
         option.setAttribute("id", `button${i+1}`);
     }
     nextQuestion();
-}
+};
 
 //Counts down the timer and ends the quiz if time is zero
 function runTimer () {
@@ -85,7 +85,7 @@ function runTimer () {
             }
         }
     },1000)
-}
+};
 
 //checks if you are the last question, or goes to next question
 function nextQuestion(event) {
@@ -95,7 +95,7 @@ function nextQuestion(event) {
     } else {
         endOfQuiz();
     }
-}
+};
 
 //Checks if you are on the first question if not checks answer from pre question
 //if answer isnt incorrect time left is reduced and will flash yellow
@@ -103,12 +103,12 @@ function writeAnswer(event) {
     if (event !== undefined) {
         if (event.currentTarget.textcontent === questionList[currentQues -1].answer) {
             isCorrect = true;
-            answer.textContent = "Correct, Wow you're smart";
-            answer.setAttribute("style", "color:green");
+            answer.textContent = "Correct";
+            answer.setAttribute("style", "color: green");
             score += 10;
         } else {
             isCorrect = false;
-            answer.textcontent = "Incorrect, wow......";
+            answer.textcontent = "Incorrect";
             answer.setAttribute("style","color: red");
             if(timeLeft > 10) {
                 timeLeft -= 10;
@@ -122,8 +122,9 @@ function writeAnswer(event) {
         }
         clearAnswer();
     }
-}
+};
 
+//Clears answer panel
 function clearAnswer() {
     if(isClearingAnswer) {
         isClearingAnswer = false;
@@ -136,8 +137,9 @@ function clearAnswer() {
             isClearingAnswer = false;
         }, 3000);
     }
-}
+};
 
+//Changes the title to the next question
 function changeQuestion() {
     title.textContent = questionList[currentQues].question;
     for(let i = 0; i < questionList[currentQues].options.length; i++) {
@@ -145,22 +147,54 @@ function changeQuestion() {
         optionList[i].addEventListener("click", nextQuestion);
     }
     currentQues++;
-}
+};
 
 //Changes title to All Done, clears options and displays the score
 
 function endOfQuiz(){
-    title.textContent = "All Done.";
+    title.textContent = "All Done!";
     timeLeft = 1;
     clearOptions();
     clearAnswer();
     content.setAttribute("style", "display: visible");
     content.textContent = `Your final score is ${score}`;
     inputFields();
-}
+};
 function clearOptions() {
     for (let i = 0; i < optionList.length; i++) {
         optionList[i].remove();
     }
     optionList = [];
+};
+
+//Highscore form -- sumbmit button, listen for click
+function inputFields() {
+    let initialsForm = document.createElement("form");
+    container.appendChild(initialsForm);
+    initialsForm.setAttribute("id","form");
+    let label = document.createComment("label");
+    initialsForm.appendChild(label);
+    label.textContent = "Enter initials: "
+    let input = document.createElement("input")
+    initialsForm.appendChild(input);
+    input.setAttribute("id", "initials");
+    let submit = document.createElement("button");
+    initialsForm.appendChild(submit);
+    submit.setAttribute("id", "submit");
+    submit.textContent = "Submit";
+
+    title.setAttribute("style", "align-self: start")
+    content.setAttribute("style", "align-self: start; font-size 150%");
+
+    input.addEventListener("keydown", stopReload);
+    submit.addEventListener("click", addScore);
+};
+
+//Prevents entry field from reloading page
+function stopReload(event) {
+    if(event.key === "Enter") {
+        event.preventDefault();
+    }
 }
+
+init();
