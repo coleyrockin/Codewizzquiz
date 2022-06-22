@@ -38,3 +38,64 @@ questionList.push(question4);
 const options5 = ["1. Amazon", "2. Google", "3. Facebook", "4. Twitter"];
 const question5 = new Question("What company helped create Bootstrap?", options5, "4. Twitter");
 questionList.push(question5);
+
+//varibles for questions
+let optionList = [];
+let currentQues= 0;
+let score = 0;
+let timeLeft = 61;
+let isQuizOngoing = false;
+let leaderboard = [];
+let intials = "";
+let isClearingAnswer = false;
+let clearingAnswerCode = 0;
+let isCorrect = false;
+
+//Init function that makes thje view scores and start button clickable
+function init() {
+    start.addEventListener("click", questionLoop);
+    scores.addEventListener("click", showScores);
+}
+
+//makes elements before the quiz started invisible and creates option buttons
+function questionLoop (){
+    runTimer();
+    isQuizOngoing =true;
+    start.setAttribute("style", "display: none");
+    content.setAttribute("style", "display:none");
+    let numOfOptions = questionList[0].options.length;
+    for(let i = 0; i < numOfOptions; i++) {
+        let option = document.createElement("button");
+        container.appendChild(option);
+        optionList.push(option);
+        option.setAttribute("id", `button${i+1}`);
+    }
+    nextQuestion();
+}
+
+//Counts down the timer and ends the quiz if time is zero
+function runTimer () {
+    let clock = setInterval(function(){
+        timeLeft--;
+        timer.textContent = `Time: ${timeLeft} seconds`;
+        if (timeLeft === 0) {
+            clearInterval(clock);
+            if(title.textContent !== "All Done.") {
+                endOfQuiz();
+            }
+        }
+    },1000)
+}
+
+//checks if you are the last question, or goes to next question
+function nextQuestion(event) {
+    writeAnswer(event);
+    if(currentQues < questionList.length) {
+        changeQuestion();
+    } else {
+        endOfQuiz();
+    }
+}
+
+//Checks if you are on the first question if not checks answer from pre question
+//if answer isnt incorrect time left is reduced and will flash yellow
