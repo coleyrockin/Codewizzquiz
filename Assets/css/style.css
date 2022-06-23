@@ -17,7 +17,7 @@ header {
     margin-top: 50px;
 }
 
-header > *{
+header > * {
     border: solid rgb(122, 247, 210) 6px;
     border-radius: 5px;
     margin: 20px 5%;
