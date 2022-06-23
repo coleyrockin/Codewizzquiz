@@ -19,8 +19,8 @@ class Question {
 let questionList = [];
 
 // Formatted questions an array
-const options1 = ["1. array", "2. container", "3. strings", "4. Algorism"];
-const question1 = new Question("What is a collection of items stored at contiguous memory locations?", options1, "1. array");
+const options1 = ["1. Array", "2. Container", "3. Strings", "4. Algorism"];
+const question1 = new Question("What is a collection of items stored at contiguous memory locations?", options1, "1. Array");
 questionList.push(question1);
 
 const options2 = ["1. Nobody knows", "2. Al Gore", "3. Bill Gates", "4. A group of people"];
@@ -28,7 +28,7 @@ const question2 = new Question("Who invented the internet?", options2, "4. A gro
 questionList.push(question2);
 
 const options3 = ["1. Type of language", "2. Dominos stock", "3. Varibles", "4. Application programming interface"];
-const question3 = new Question("What is a DOM?", options3, "4. application programming interface");
+const question3 = new Question("What is a DOM?", options3, "4. Application programming interface");
 questionList.push(question3);
 
 const options4 = ["1. Closed Standard Captions", "2. Cascading Style Sheets", "3. Computer Selective Science", "4. Communism Stalin Statue"];
@@ -60,7 +60,7 @@ function init() {
 //makes elements before the quiz started invisible and creates option buttons
 function questionLoop (){
     runTimer();
-    isQuizOngoing =true;
+    isQuizOngoing = true;
     start.setAttribute("style", "display: none");
     content.setAttribute("style", "display: none");
     let numOfOptions = questionList[0].options.length;
@@ -101,14 +101,14 @@ function nextQuestion(event) {
 //if answer isnt incorrect time left is reduced and will flash yellow
 function writeAnswer(event) {
     if (event !== undefined) {
-        if (event.currentTarget.textcontent === questionList[currentQues -1].answer) {
+        if (event.currentTarget.textContent === questionList[currentQues -1].answer) {
             isCorrect = true;
             answer.textContent = "Correct";
-            answer.setAttribute("style", "color: green");
+            answer.setAttribute("style", "color: limegreen");
             score += 10;
         } else {
             isCorrect = false;
-            answer.textcontent = "Incorrect";
+            answer.textContent = "Incorrect";
             answer.setAttribute("style","color: red");
             if(timeLeft > 10) {
                 timeLeft -= 10;
@@ -147,25 +147,25 @@ function changeQuestion() {
         optionList[i].addEventListener("click", nextQuestion);
     }
     currentQues++;
-};
+}
 
-//Changes title to All Done, clears options and displays the score
+//Changes title to All Done., clears options and displays the score
 
 function endOfQuiz(){
-    title.textContent = "All Done!";
+    title.textContent = "All Done.";
     timeLeft = 1;
     clearOptions();
     clearAnswer();
     content.setAttribute("style", "display: visible");
     content.textContent = `Your final score is ${score}`;
     inputFields();
-};
+}
 function clearOptions() {
     for (let i = 0; i < optionList.length; i++) {
         optionList[i].remove();
     }
     optionList = [];
-};
+}
 
 //Highscore form -- sumbmit button, listen for click
 function inputFields() {
@@ -188,13 +188,120 @@ function inputFields() {
 
     input.addEventListener("keydown", stopReload);
     submit.addEventListener("click", addScore);
-};
+}
 
 //Prevents entry field from reloading page
 function stopReload(event) {
     if(event.key === "Enter") {
         event.preventDefault();
     }
+}
+//Prevents sumbmit from reloading page, checks intials format, program is over
+//saves score
+function addScore(event) {
+    if(event !== undefined) {
+        event.preventDefault();
+    }
+    let id = document.getElementById("initials");
+    if(id.value.length > 3 || id.value.length === 0) {
+        invalidInput();
+        return;
+    }
+    isQuizOngoing = false;
+    document.getElementById("form").remove();
+    saveScore(id);
+}
+
+//Score check locally; populates, adds to the array updates localstorage
+function saveScore(id) {
+    if (localStorage.getItem("leaderboard") !== null) {
+        leaderboard = JSON.parse(localStorage.getItem("leaderboard"));
+    }
+    leaderboard.push(`${score} ${id.value}`);
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+    showScores();
+}
+
+//leaderboard incorrect message is displayed
+function invalidInput() {
+    answer.textContent = "Initials must be entered and three characters or less";
+    answer.setAttribute("style", "color: white");
+    clearAnswer();
+    let submit = document.getElementById("submit");
+    submit.addEventListener("click", addScore);
+}
+
+function showScores() {
+    if(!isQuizOngoing) {
+        title.textContent = "High Scores";
+        //hide button
+        start.setAttribute("style", "display: none");
+        writeScores();
+        createEndButtons();
+    } else if (title.textContent === "All Done.") {
+        answer.textContent = "Please enter your initials first";
+        answer.setAttribute("style", "color: white");
+        clearAnswer();
+    } else {
+        answer.textContent = "Cannot view scores until the quiz is over";
+        answer.setAttribute("style", "color: white");
+        clearAnswer();
+    }
+}
+//Storage of scores
+function writeScores() {
+    content.textContent = "";
+    content.setAttribute("style", "white-space: pre-wrap; font-size 150%");
+    if(localStorage.getItem ("leaderboard")!==null) {
+        leaderboard = JSON.parse(localStorage.getItem("leaderboard"));
+    }
+    leaderboard.sort();
+    leaderboard.reverse();
+    let limit = 11;
+    if(limit > leaderboard.length) {
+        limit = leaderboard.length;
+    }
+    for(let i = 0; i < limit; i++) {
+        content.textContent += leaderboard[i] + '\n';
+    }
+}
+
+//Buttons for the end of quiz
+function createEndButtons() {
+    if(!document.getElementById("restart")) {
+        let restartVar = document.createElement("button");
+        container.appendChild(restartVar);
+        restartVar.textContent = "Restart";
+        restartVar.setAttribute("id", "restart");
+
+        let clearScoresVar = document.createElement("button");
+        container.appendChild(clearScoresVar);
+        clearScoresVar.textContent = "Clear High Scores";
+        clearScoresVar.setAttribute("id", "clearScores");
+
+        restartVar.addEventListener("click", restart);
+        clearScoresVar.addEventListener("click", clearScores)
+    }
+}
+
+function restart() {
+    title.setAttribute("style", "align-self: center");
+    content.setAttribute("style", "align-self: center; font-size:110%");
+    document.getElementById("restart").remove();
+    document.getElementById("clearScores").remove();
+    title.textContent = "Coding Wizz Quiz";
+    content.textContent = ""
+    start.setAttribute("style", "display: visible");
+    currentQues = 0;
+    score = 0;
+    timeLeft = 61;
+    init();
+}
+
+function clearScores() {
+    localStorage.clear();
+    content.textContent = "";
+    leaderboard = [];
 }
 
 init();
