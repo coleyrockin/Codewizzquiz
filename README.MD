@@ -1,15 +1,21 @@
-GIVEN I am taking a code quiz
-WHEN I click the start button
-THEN a timer starts and I am presented with a question
-WHEN I answer a question
-THEN I am presented with another question
-WHEN I answer a question incorrectly
-THEN time is subtracted from the clock
-WHEN all questions are answered or the timer reaches 0
-THEN the game is over
-WHEN the game is over
-THEN I can save my initials and score
+**I am taking a code quiz**
+**I click the start button**
+**A timer starts and I am presented with a question**
+**I answer a question**
+**I am presented with another question**
+**I answer a question incorrectly**
+**Time is subtracted from the clock**
+**All questions are answered or the timer reaches 0**
+**The game is over**
+**The game is over**
+**I can save my initials and score**
 
 Will utilize Html, Javascript, and CSS
 
+Repository
 https://github.com/coleyrockin/Codewizzquiz
+
+Deployed Application
+https://coleyrockin.github.io/Codewizzquiz/
+
+![image below](./assets/images/codewizzquizz.jpg)
