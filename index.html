@@ -2,25 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./Assets/css/style.css">
     <title>Code Wizz Quiz</title>
 </head>
 <body>
     <header>
-        <a id="scores">Highest of scores</a>
-        <section id="timer">Time: 0 seconds</section>
+        <a id="scores" role="button" tabindex="0">High Scores</a>
+        <div id="timer">Time: 60s</div>
     </header>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
     <main id="container">
-        <h1 id="title">Coding Wizz Quiz</h1>
-        <section id="content">You have limited time to answer these coding question, if you answer
-            wrong you will be penalized time.
-        </section>
+        <h1 id="title">Code Wizz Quiz</h1>
+        <p id="content">You have limited time to answer these coding questions. Answer incorrectly and time is deducted from the clock. Good luck!</p>
         <button id="start">Start Quiz</button>
     </main>
-    <footer id="answer"></footer>    
+    <div id="answer" role="status" aria-live="polite"></div>
     <script src="./Assets/js/script.js"></script>
 </body>
-
 </html>
