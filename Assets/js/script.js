@@ -1,307 +1,326 @@
-// Variables to access html elements
-let scores = document.querySelector("#scores");
-let timer = document.querySelector("#timer");
-let container = document.querySelector("#container");
-let title = document.querySelector("#title");
-let content = document.querySelector("#content");
-let start = document.querySelector("#start");
-let answer = document.querySelector("#answer");
+// ── DOM references ──────────────────────────────────────────────────
+const scoresLink    = document.querySelector("#scores");
+const timerEl       = document.querySelector("#timer");
+const progressFill  = document.querySelector("#progress-fill");
+const container     = document.querySelector("#container");
+const titleEl       = document.querySelector("#title");
+const contentEl     = document.querySelector("#content");
+const startBtn      = document.querySelector("#start");
+const answerEl      = document.querySelector("#answer");
 
-// Structure of questions
+// ── Question data ───────────────────────────────────────────────────
 class Question {
     constructor(question, options, answer) {
         this.question = question;
-        this.options = options;
-        this.answer = answer;
+        this.options  = options;
+        this.answer   = answer;
     }
-};
+}
 
-let questionList = [];
+const questionList = [
+    new Question(
+        "What data structure stores items at contiguous memory locations?",
+        ["1. Array", "2. Hash map", "3. Linked list", "4. Stack"],
+        "1. Array"
+    ),
+    new Question(
+        "What does DOM stand for?",
+        ["1. Data Object Model", "2. Document Object Model", "3. Dynamic Object Map", "4. Document Oriented Markup"],
+        "2. Document Object Model"
+    ),
+    new Question(
+        "What does CSS stand for?",
+        ["1. Computer Style Script", "2. Creative Style Syntax", "3. Cascading Style Sheets", "4. Coded Style System"],
+        "3. Cascading Style Sheets"
+    ),
+    new Question(
+        "Which company originally developed Bootstrap?",
+        ["1. Google", "2. Facebook", "3. Microsoft", "4. Twitter"],
+        "4. Twitter"
+    ),
+    new Question(
+        "What does API stand for?",
+        ["1. Application Programming Interface", "2. Automated Process Integration", "3. Array Pointer Index", "4. Applied Protocol Input"],
+        "1. Application Programming Interface"
+    ),
+    new Question(
+        "Which keyword declares a block-scoped variable in modern JavaScript?",
+        ["1. var", "2. let", "3. def", "4. dim"],
+        "2. let"
+    ),
+    new Question(
+        "What does the 'git commit' command do?",
+        ["1. Uploads files to GitHub", "2. Creates a new branch", "3. Saves a snapshot of staged changes", "4. Merges two branches"],
+        "3. Saves a snapshot of staged changes"
+    ),
+];
 
-// Formatted questions an array
-const options1 = ["1. Array", "2. Container", "3. Strings", "4. Algorism"];
-const question1 = new Question("What is a collection of items stored at contiguous memory locations?", options1, "1. Array");
-questionList.push(question1);
+// ── Quiz state ──────────────────────────────────────────────────────
+let optionButtons   = [];
+let currentQues     = 0;
+let score           = 0;
+let timeLeft        = 60;
+let isQuizOngoing   = false;
+let leaderboard     = [];
+let clockInterval   = null;
+let answerTimeout   = null;
 
-const options2 = ["1. Nobody knows", "2. Al Gore", "3. Bill Gates", "4. A group of people"];
-const question2 = new Question("Who invented the internet?", options2, "4. A group of people");
-questionList.push(question2);
+// ── Init ────────────────────────────────────────────────────────────
+startBtn.addEventListener("click", startQuiz);
+scoresLink.addEventListener("click", handleScoresClick);
 
-const options3 = ["1. Type of language", "2. Dominos stock", "3. Varibles", "4. Application programming interface"];
-const question3 = new Question("What is a DOM?", options3, "4. Application programming interface");
-questionList.push(question3);
-
-const options4 = ["1. Closed Standard Captions", "2. Cascading Style Sheets", "3. Computer Selective Science", "4. Communism Stalin Statue"];
-const question4 = new Question("What does CSS stand for?", options4, "2. Cascading Style Sheets");
-questionList.push(question4);
-
-const options5 = ["1. Amazon", "2. Google", "3. Facebook", "4. Twitter"];
-const question5 = new Question("What company helped create Bootstrap?", options5, "4. Twitter");
-questionList.push(question5);
-
-//varibles for questions
-let optionList = [];
-let currentQues= 0;
-let score = 0;
-let timeLeft = 61;
-let isQuizOngoing = false;
-let leaderboard = [];
-let intials = "";
-let isClearingAnswer = false;
-let clearingAnswerCode = 0;
-let isCorrect = false;
-
-//Init function that makes thje view scores and start button clickable
-function init() {
-    start.addEventListener("click", questionLoop);
-    scores.addEventListener("click", showScores);
-};
-
-//makes elements before the quiz started invisible and creates option buttons
-function questionLoop (){
-    runTimer();
+// ── Start quiz ──────────────────────────────────────────────────────
+function startQuiz() {
     isQuizOngoing = true;
-    start.setAttribute("style", "display: none");
-    content.setAttribute("style", "display: none");
-    let numOfOptions = questionList[0].options.length;
-    for(let i = 0; i < numOfOptions; i++) {
-        let option = document.createElement("button");
-        container.appendChild(option);
-        optionList.push(option);
-        option.setAttribute("id", `button${i+1}`);
-    }
-    nextQuestion();
-};
+    startBtn.classList.add("hidden");
+    contentEl.classList.remove("score-display");
+    contentEl.textContent = "";
+    runTimer();
+    createOptionButtons();
+    showNextQuestion();
+}
 
-//Counts down the timer and ends the quiz if time is zero
-function runTimer () {
-    let clock = setInterval(function(){
+// ── Timer ───────────────────────────────────────────────────────────
+function runTimer() {
+    clockInterval = setInterval(() => {
         timeLeft--;
-        timer.textContent = `Time: ${timeLeft} seconds`;
-        if (timeLeft === 0) {
-            clearInterval(clock);
-            if(title.textContent !== "All Done.") {
-                endOfQuiz();
+        timerEl.textContent = `Time: ${timeLeft}s`;
+
+        timerEl.classList.toggle("warning", timeLeft <= 15 && timeLeft > 5);
+        timerEl.classList.toggle("danger",  timeLeft <= 5);
+
+        if (timeLeft <= 0) {
+            clearInterval(clockInterval);
+            if (titleEl.textContent !== "All Done!") {
+                endQuiz();
             }
         }
-    },1000)
-};
+    }, 1000);
+}
 
-//checks if you are the last question, or goes to next question
-function nextQuestion(event) {
-    writeAnswer(event);
-    if(currentQues < questionList.length) {
-        changeQuestion();
-    } else {
-        endOfQuiz();
+// ── Create answer buttons ───────────────────────────────────────────
+function createOptionButtons() {
+    const count = questionList[0].options.length;
+    for (let i = 0; i < count; i++) {
+        const btn = document.createElement("button");
+        btn.setAttribute("id", `button${i + 1}`);
+        container.appendChild(btn);
+        optionButtons.push(btn);
+        btn.addEventListener("click", handleAnswer);
     }
-};
+}
 
-//Checks if you are on the first question if not checks answer from pre question
-//if answer isnt incorrect time left is reduced and will flash yellow
-function writeAnswer(event) {
-    if (event !== undefined) {
-        if (event.currentTarget.textContent === questionList[currentQues -1].answer) {
-            isCorrect = true;
-            answer.textContent = "Correct";
-            answer.setAttribute("style", "color: limegreen");
-            score += 10;
-        } else {
-            isCorrect = false;
-            answer.textContent = "Incorrect";
-            answer.setAttribute("style","color: red");
-            if(timeLeft > 10) {
-                timeLeft -= 10;
-            } else {
-                timeLeft = 1;
-            }
-            timer.setAttribute("style", "color: yellow")
-            setTimeout(function () {
-                timer.setAttribute("style","color: red");
-            },1000);
-        }
-        clearAnswer();
+// ── Show the current question ───────────────────────────────────────
+function showNextQuestion() {
+    if (currentQues >= questionList.length) {
+        endQuiz();
+        return;
     }
-};
-
-//Clears answer panel
-function clearAnswer() {
-    if(isClearingAnswer) {
-        isClearingAnswer = false;
-        clearTimeout(clearingAnswerCode);
-        clearAnswer();
-    } else {
-        isClearingAnswer = true;
-        clearingAnswerCode = setTimeout(function() {
-            answer.textContent = "";
-            isClearingAnswer = false;
-        }, 3000);
+    const q = questionList[currentQues];
+    titleEl.textContent = q.question;
+    for (let i = 0; i < q.options.length; i++) {
+        optionButtons[i].textContent = q.options[i];
     }
-};
-
-//Changes the title to the next question
-function changeQuestion() {
-    title.textContent = questionList[currentQues].question;
-    for(let i = 0; i < questionList[currentQues].options.length; i++) {
-        optionList[i].textContent = questionList[currentQues].options[i];
-        optionList[i].addEventListener("click", nextQuestion);
-    }
+    updateProgressBar();
     currentQues++;
 }
 
-//Changes title to All Done., clears options and displays the score
+// ── Handle an answer click ──────────────────────────────────────────
+function handleAnswer(event) {
+    const chosen  = event.currentTarget.textContent;
+    const correct = questionList[currentQues - 1].answer;
 
-function endOfQuiz(){
-    title.textContent = "All Done.";
-    timeLeft = 1;
-    clearOptions();
-    clearAnswer();
-    content.setAttribute("style", "display: visible");
-    content.textContent = `Your final score is ${score}`;
-    inputFields();
-}
-function clearOptions() {
-    for (let i = 0; i < optionList.length; i++) {
-        optionList[i].remove();
+    if (chosen === correct) {
+        score += 10;
+        showFeedback("Correct!", "correct");
+    } else {
+        timeLeft = Math.max(1, timeLeft - 10);
+        timerEl.textContent = `Time: ${timeLeft}s`;
+        showFeedback("Incorrect!", "incorrect");
     }
-    optionList = [];
+    showNextQuestion();
 }
 
-//Highscore form -- sumbmit button, listen for click
-function inputFields() {
-    let initialsForm = document.createElement("form");
-    container.appendChild(initialsForm);
-    initialsForm.setAttribute("id","form");
-    let label = document.createComment("label");
-    initialsForm.appendChild(label);
-    label.textContent = "Enter initials: "
-    let input = document.createElement("input")
-    initialsForm.appendChild(input);
+// ── Feedback banner ─────────────────────────────────────────────────
+function showFeedback(message, type) {
+    if (answerTimeout) clearTimeout(answerTimeout);
+    answerEl.textContent = message;
+    answerEl.className   = type;
+    answerTimeout = setTimeout(() => {
+        answerEl.textContent = "";
+        answerEl.className   = "";
+    }, 2500);
+}
+
+// ── Progress bar ────────────────────────────────────────────────────
+function updateProgressBar() {
+    const pct = (currentQues / questionList.length) * 100;
+    progressFill.style.width = `${pct}%`;
+}
+
+// ── End of quiz ─────────────────────────────────────────────────────
+function endQuiz() {
+    clearInterval(clockInterval);
+    timeLeft = 0;
+    timerEl.textContent = "Time: 0s";
+    timerEl.classList.remove("warning", "danger");
+
+    clearOptionButtons();
+    titleEl.textContent   = "All Done!";
+    contentEl.textContent = `Your final score is ${score} / ${questionList.length * 10}`;
+    contentEl.classList.add("score-display");
+    progressFill.style.width = "100%";
+
+    buildInitialsForm();
+}
+
+function clearOptionButtons() {
+    optionButtons.forEach(btn => btn.remove());
+    optionButtons = [];
+}
+
+// ── Initials form ───────────────────────────────────────────────────
+function buildInitialsForm() {
+    const form  = document.createElement("form");
+    form.setAttribute("id", "form");
+
+    const label = document.createElement("label");
+    label.setAttribute("for", "initials");
+    label.textContent = "Enter your initials:";
+    form.appendChild(label);
+
+    const input = document.createElement("input");
     input.setAttribute("id", "initials");
-    let submit = document.createElement("button");
-    initialsForm.appendChild(submit);
+    input.setAttribute("maxlength", "3");
+    input.setAttribute("placeholder", "e.g. ABC");
+    input.setAttribute("autocomplete", "off");
+    form.appendChild(input);
+
+    const submit = document.createElement("button");
     submit.setAttribute("id", "submit");
-    submit.textContent = "Submit";
+    submit.setAttribute("type", "button");
+    submit.textContent = "Submit Score";
+    form.appendChild(submit);
 
-    title.setAttribute("style", "align-self: start")
-    content.setAttribute("style", "align-self: start; font-size 150%");
+    container.appendChild(form);
 
-    input.addEventListener("keydown", stopReload);
-    submit.addEventListener("click", addScore);
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") { e.preventDefault(); submitScore(); }
+    });
+    submit.addEventListener("click", submitScore);
 }
 
-//Prevents entry field from reloading page
-function stopReload(event) {
-    if(event.key === "Enter") {
-        event.preventDefault();
-    }
-}
-//Prevents sumbmit from reloading page, checks intials format, program is over
-//saves score
-function addScore(event) {
-    if(event !== undefined) {
-        event.preventDefault();
-    }
-    let id = document.getElementById("initials");
-    if(id.value.length > 3 || id.value.length === 0) {
-        invalidInput();
+// ── Submit score ────────────────────────────────────────────────────
+function submitScore() {
+    const input = document.getElementById("initials");
+    const value = input.value.trim();
+
+    if (value.length === 0 || value.length > 3) {
+        showFeedback("Initials must be 1–3 characters", "neutral");
         return;
     }
+
     isQuizOngoing = false;
     document.getElementById("form").remove();
-    saveScore(id);
+    saveScore(value);
 }
 
-//Score check locally; populates, adds to the array updates localstorage
-function saveScore(id) {
-    if (localStorage.getItem("leaderboard") !== null) {
-        leaderboard = JSON.parse(localStorage.getItem("leaderboard"));
-    }
-    leaderboard.push(`${score} ${id.value}`);
+// ── Local storage ───────────────────────────────────────────────────
+function saveScore(initials) {
+    const stored = localStorage.getItem("leaderboard");
+    if (stored) leaderboard = JSON.parse(stored);
+    leaderboard.push({ score, initials });
     localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
     showScores();
 }
 
-//leaderboard incorrect message is displayed
-function invalidInput() {
-    answer.textContent = "Initials must be entered and three characters or less";
-    answer.setAttribute("style", "color: white");
-    clearAnswer();
-    let submit = document.getElementById("submit");
-    submit.addEventListener("click", addScore);
+// ── Scores screen ───────────────────────────────────────────────────
+function handleScoresClick() {
+    if (isQuizOngoing && titleEl.textContent !== "All Done!") {
+        showFeedback("Cannot view scores until the quiz is over", "neutral");
+        return;
+    }
+    if (titleEl.textContent === "All Done!") {
+        showFeedback("Please enter your initials first", "neutral");
+        return;
+    }
+    showScores();
 }
 
 function showScores() {
-    if(!isQuizOngoing) {
-        title.textContent = "High Scores";
-        //hide button
-        start.setAttribute("style", "display: none");
-        writeScores();
-        createEndButtons();
-    } else if (title.textContent === "All Done.") {
-        answer.textContent = "Please enter your initials first";
-        answer.setAttribute("style", "color: white");
-        clearAnswer();
+    titleEl.textContent = "High Scores";
+    startBtn.classList.add("hidden");
+    renderLeaderboard();
+    buildEndButtons();
+}
+
+function renderLeaderboard() {
+    const stored = localStorage.getItem("leaderboard");
+    leaderboard  = stored ? JSON.parse(stored) : [];
+
+    // Sort numerically, highest first (top 10)
+    leaderboard.sort((a, b) => b.score - a.score);
+    const top = leaderboard.slice(0, 10);
+
+    contentEl.classList.add("score-display");
+    if (top.length === 0) {
+        contentEl.textContent = "No scores yet.";
     } else {
-        answer.textContent = "Cannot view scores until the quiz is over";
-        answer.setAttribute("style", "color: white");
-        clearAnswer();
-    }
-}
-//Storage of scores
-function writeScores() {
-    content.textContent = "";
-    content.setAttribute("style", "white-space: pre-wrap; font-size 150%");
-    if(localStorage.getItem ("leaderboard")!==null) {
-        leaderboard = JSON.parse(localStorage.getItem("leaderboard"));
-    }
-    leaderboard.sort();
-    leaderboard.reverse();
-    let limit = 11;
-    if(limit > leaderboard.length) {
-        limit = leaderboard.length;
-    }
-    for(let i = 0; i < limit; i++) {
-        content.textContent += leaderboard[i] + '\n';
+        contentEl.textContent = top
+            .map((entry, i) => `${i + 1}. ${entry.initials.toUpperCase()}  —  ${entry.score}`)
+            .join("\n");
     }
 }
 
-//Buttons for the end of quiz
-function createEndButtons() {
-    if(!document.getElementById("restart")) {
-        let restartVar = document.createElement("button");
-        container.appendChild(restartVar);
-        restartVar.textContent = "Restart";
-        restartVar.setAttribute("id", "restart");
+// ── End buttons ─────────────────────────────────────────────────────
+function buildEndButtons() {
+    if (document.getElementById("restart")) return;
 
-        let clearScoresVar = document.createElement("button");
-        container.appendChild(clearScoresVar);
-        clearScoresVar.textContent = "Clear High Scores";
-        clearScoresVar.setAttribute("id", "clearScores");
+    const restartBtn = document.createElement("button");
+    restartBtn.textContent = "Play Again";
+    restartBtn.setAttribute("id", "restart");
+    container.appendChild(restartBtn);
 
-        restartVar.addEventListener("click", restart);
-        clearScoresVar.addEventListener("click", clearScores)
-    }
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "Clear High Scores";
+    clearBtn.setAttribute("id", "clearScores");
+    container.appendChild(clearBtn);
+
+    restartBtn.addEventListener("click", resetQuiz);
+    clearBtn.addEventListener("click", clearScores);
 }
 
-function restart() {
-    title.setAttribute("style", "align-self: center");
-    content.setAttribute("style", "align-self: center; font-size:110%");
-    document.getElementById("restart").remove();
-    document.getElementById("clearScores").remove();
-    title.textContent = "Coding Wizz Quiz";
-    content.textContent = ""
-    start.setAttribute("style", "display: visible");
-    currentQues = 0;
-    score = 0;
-    timeLeft = 61;
-    init();
+// ── Reset / restart ─────────────────────────────────────────────────
+function resetQuiz() {
+    // Remove end buttons if present
+    document.getElementById("restart")?.remove();
+    document.getElementById("clearScores")?.remove();
+
+    // Reset state
+    currentQues   = 0;
+    score         = 0;
+    timeLeft      = 60;
+    isQuizOngoing = false;
+    leaderboard   = [];
+    optionButtons = [];
+
+    // Reset UI
+    titleEl.textContent = "Code Wizz Quiz";
+    titleEl.removeAttribute("style");
+    contentEl.textContent = "You have limited time to answer these coding questions. Answer incorrectly and time is deducted from the clock. Good luck!";
+    contentEl.classList.remove("score-display");
+    contentEl.removeAttribute("style");
+    timerEl.textContent = "Time: 60s";
+    timerEl.classList.remove("warning", "danger");
+    progressFill.style.width = "0%";
+    answerEl.textContent = "";
+    answerEl.className   = "";
+    startBtn.classList.remove("hidden");
 }
 
+// ── Clear scores ────────────────────────────────────────────────────
 function clearScores() {
     localStorage.clear();
-    content.textContent = "";
     leaderboard = [];
+    renderLeaderboard();
 }
-
-init();
